@@ -1,0 +1,64 @@
+# Default values for pulp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: pulp
+
+replicaCount: 1
+
+image:
+  repository: pulp/pulp:https
+  pullPolicy: IfNotPresent
+  tag: "clientcaopt"
+
+imagePullSecrets: []
+nameOverride: "pulp"
+fullnameOverride: "pulp"
+
+serviceAccount:
+  create: true
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+service:
+  type: ClusterIP
+  port: 8443
+  targetPort: 443
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true" 
+  hosts:
+    - host: <pulp-url> 
+      paths:
+        - path: /
+
+resources:
+  limits:
+    cpu: 4
+    memory: 8Gi
+  requests:
+    cpu: 2
+    memory: 6Gi
+
+nodeSelector: {}
+
+tolerations: {} 
+
+affinity: {}
+
+storage:
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  VolumeReclaimPolicy: Retain 
+  pvpath: /pulp_data 
+
+##Substitute these values with default values
+database_fields_symmetric_key: database_fields_symmetric_key
+token_private_key_pem: token_private_key_pem
+token_public_key_pem: token_public_key_pem
+pulp_webserver_crt: pulp_webserver_crt
+pulp_webserver_key: pulp_webserver_key

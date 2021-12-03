@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: StatefulSet 
+metadata:
+  name: {{ include "pulp.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pulp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  serviceName: {{ include "pulp.fullname" . }} 
+  selector:
+    matchLabels:
+      {{- include "pulp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "pulp.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "pulp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - name: settings
+            mountPath: /etc/pulp
+          - name: settings-file
+            mountPath: /etc/pulp/settings.py
+            subPath: settings.py
+          - name: pulp-certs
+            mountPath: /etc/pulp/certs
+          - name: {{ include "pulp.fullname" . }}-pvc
+            mountPath: /var/lib/pulp
+            subPath: pulp
+          - name: {{ include "pulp.fullname" . }}-pvc
+            mountPath: /var/lib/pgsql
+            subPath: pgsql
+          - name: {{ include "pulp.fullname" . }}-pvc
+            mountPath: /var/lib/containers
+            subPath: containers
+      volumes:
+      - name: settings
+        emptyDir: {}
+      - name: settings-file
+        configMap:
+          name: {{ include "pulp.fullname" . }}
+      - name: pulp-certs
+        secret:
+          secretName: {{ include "pulp.fullname" . }} 
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: {{ include "pulp.fullname" . }}-pvc
+    spec:
+      accessModes:
+      - {{ .Values.storage.accessMode | quote }}
+      resources:
+        requests:
+          storage: {{ .Values.storage.size  }}
+      storageClassName: {{ include "pulp.fullname" . }}-storage 
+      volumeMode: Filesystem

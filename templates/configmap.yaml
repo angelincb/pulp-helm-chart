@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap 
+metadata:
+  name: {{ include "pulp.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pulp.labels" . | nindent 4 }}
+data:
+  settings.py: |
+    CONTENT_ORIGIN='https://<pulp-url>'
+    ANSIBLE_API_HOSTNAME='https://<pulp-url>'
+    ANSIBLE_CONTENT_HOSTNAME='https://<pulp-url>/pulp/content'
+    TOKEN_AUTH_DISABLED=True

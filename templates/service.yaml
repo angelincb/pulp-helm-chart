@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pulp.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "pulp.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: {{ include "pulp.fullname" . }}-https
+  selector:
+    {{- include "pulp.selectorLabels" . | nindent 4 }}
